@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Streaming - Intelligent Surveillance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Basic styling for action list */
+    .action-list {
+        margin-top: 10px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .action-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        border-bottom: 1px dotted #eee;
+    }
+    .action-item:last-child {
+        border-bottom: none;
+    }
+    .action-name {
+        font-weight: bold;
+    }
+    .action-count {
+        background-color: #00bcd4;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/">Home</a>
+    <a href="/live">Live Cam</a>
+    <a href="/upload">Upload Video</a>
+    <a href="/dashboard">Dashboard</a>
+  </nav>
+
+  <div class="stream-page">
+    <div class="stream-left">
+      <h3>Streaming: {{ filename }}</h3>
+      <img id="video-stream" src="{{ url_for('video_feed') }}?source=uploaded&file={{ filename }}" width="800" />
+      <div class="controls">
+        <a href="{{ url_for('download', filename=filename) }}"><button>Download Original</button></a>
+      </div>
+    </div>
+
+    <div class="stream-right">
+      <h4>Live Stats</h4>
+      <div class="stat-card">Frames processed: <span id="frames">0</span></div>
+      <div class="stat-card">Last frame detections: <span id="last_det">0</span></div>
+      <div class="stat-card">Avg confidence: <span id="avg_conf">0.00</span></div>
+      <div class="stat-card">FPS (est): <span id="fps">0.0</span></div>
+
+      <h4>Detected Actions & Objects</h4>
+      <div id="action_list" class="action-list">
+        <p style="text-align: center; color: #888;">Fetching detections...</p>
+      </div>
+
+      <canvas id="liveChart" width="300" height="200"></canvas>
+    </div>
+  </div>
+
+<script>
+  const framesEl = document.getElementById('frames');
+  const lastDetEl = document.getElementById('last_det');
+  const avgConfEl = document.getElementById('avg_conf');
+  const fpsEl = document.getElementById('fps');
+  const actionListEl = document.getElementById('action_list');
+
+  const ctx = document.getElementById('liveChart').getContext('2d');
+  const chartData = {
+    labels: [],
+    datasets: [{
+      label: 'Detections per frame',
+      data: [],
+      fill: false,
+      tension: 0.3,
+      borderColor: '#00bcd4'
+    }]
+  };
+  const liveChart = new Chart(ctx, {
+    type: 'line',
+    data: chartData,
+    options: {
+      responsive: true,
+      animation: { duration: 200 },
+      scales: {
+        x: { display: false }
+      }
+    }
+  });
+
+  async function pollStats(){
+    try {
+      const res = await fetch('/video_stats');
+      const j = await res.json();
+
+      // Update general stats
+      framesEl.textContent = j.frames_processed;
+      lastDetEl.textContent = j.last_frame_detections;
+      avgConfEl.textContent = j.avg_confidence;
+      fpsEl.textContent = j.fps;
+
+      // START: Update Action/Object List logic
+      actionListEl.innerHTML = ''; // Clear existing list
+      const actions = j.action_counts;
+      const actionKeys = Object.keys(actions).sort(); // Sort keys alphabetically for consistent display
+
+      if (actionKeys.length === 0 && j.frames_processed > 0) {
+        actionListEl.innerHTML = '<p style="text-align: center; color: #888;">No objects or actions detected.</p>';
+      } else if (actionKeys.length === 0) {
+        actionListEl.innerHTML = '<p style="text-align: center; color: #888;">Fetching detections...</p>';
+      }
+
+      actionKeys.forEach(action => {
+        const count = actions[action];
+        const actionItem = document.createElement('div');
+        actionItem.className = 'action-item';
+
+        // Format label (e.g., 'WALKING' or 'PERSON')
+        const displayLabel = action.toUpperCase().replace(/_/g, ' ');
+
+        actionItem.innerHTML = `<span class="action-name">${displayLabel}</span> <span class="action-count">${count}</span>`;
+        actionListEl.appendChild(actionItem);
+      });
+      // END: Update Action/Object List logic
+
+
+      // Update chart
+      const now = new Date().toLocaleTimeString();
+      chartData.labels.push(now);
+      chartData.datasets[0].data.push(j.last_frame_detections);
+      if (chartData.labels.length > 30) {
+        chartData.labels.shift();
+        chartData.datasets[0].data.shift();
+      }
+      liveChart.update();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTimeout(pollStats, 700);
+    }
+  }
+  pollStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Smart Surveillance System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/live">Live Feed</a>
+        <a href="/upload">Upload Video</a>
+        <a href="/dashboard">Dashboard</a>
+    </div>
+
+    <div class="container">
+        <h1>Welcome to Smart Surveillance System</h1>
+        <p>Monitor and analyze live or recorded footage using AI-powered detection.</p>
+        <button onclick="location.href='/live'">Go to Live Feed</button>
+        <button onclick="location.href='/upload'">Upload a Video</button>
+    </div>
+</body>
+</html>

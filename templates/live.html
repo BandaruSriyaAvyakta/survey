@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Live Camera - Surveillance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/">Home</a>
+    <a href="/live">Live Cam</a>
+    <a href="/upload">Upload Video</a>
+    <a href="/dashboard">Dashboard</a>
+  </nav>
+
+  <div class="stream-page">
+    <div class="stream-left">
+      <h3>Live Camera</h3>
+      <img id="video-stream" src="{{ url_for('video_feed') }}?source=cam" width="800" />
+    </div>
+
+    <div class="stream-right">
+      <h4>Live Stats</h4>
+      <div class="stat-card">Frames processed: <span id="frames">0</span></div>
+      <div class="stat-card">Last frame detections: <span id="last_det">0</span></div>
+      <div class="stat-card">Avg confidence: <span id="avg_conf">0.00</span></div>
+      <div class="stat-card">FPS (est): <span id="fps">0.0</span></div>
+
+      <canvas id="liveChart" width="300" height="200"></canvas>
+    </div>
+  </div>
+
+<script>
+  // reuse polling logic from stream.html
+  // ... (same JS as stream.html) ...
+  // For brevity, copy the polling script here (or include it via static/js)
+  async function pollStats(){
+    try {
+      const res = await fetch('/video_stats');
+      const j = await res.json();
+      document.getElementById('frames').textContent = j.frames_processed;
+      document.getElementById('last_det').textContent = j.last_frame_detections;
+      document.getElementById('avg_conf').textContent = j.avg_confidence;
+      document.getElementById('fps').textContent = j.fps;
+      // chart updates omitted here for brevity; reuse implementation from stream.html
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTimeout(pollStats, 700);
+    }
+  }
+  pollStats();
+</script>
+</body>
+</html>

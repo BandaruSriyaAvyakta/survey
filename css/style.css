@@ -1,0 +1,130 @@
+:root {
+  --bg: #fdfaf6;            /* Light pastel background */
+  --card: #ffffff;           /* White card with subtle shadow */
+  --accent: #a4c3b2;         /* Soft mint green accent */
+  --muted: #6b7280;          /* Muted gray for text */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Poppins", Arial, sans-serif;
+  background: var(--bg);
+  color: #36454f; /* Deep pastel gray-blue text */
+  -webkit-font-smoothing: antialiased;
+}
+
+.navbar {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 24px;
+  background: linear-gradient(90deg, #f5ebe0, #faedcd);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: sticky; top: 0; z-index: 5;
+}
+
+.navbar a {
+  color: #5f6f65;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.22s;
+}
+
+.navbar a:hover {
+  background: rgba(164, 195, 178, 0.15);
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.container {
+  padding: 48px;
+  text-align: center;
+}
+
+button {
+  background: var(--accent);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  box-shadow: 0 6px 20px rgba(164, 195, 178, 0.3);
+}
+
+button:hover {
+  transform: translateY(-3px);
+  opacity: 0.95;
+}
+
+.stream-page {
+  display: flex;
+  gap: 26px;
+  padding: 28px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.stream-left {
+  flex: 1;
+  text-align: center;
+}
+
+.stream-right {
+  width: 360px;
+  background: linear-gradient(180deg, #ffffff, #fdfaf6);
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card {
+  background: var(--card);
+  padding: 12px 14px;
+  margin: 8px 0;
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.card-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: linear-gradient(180deg, #fff, #f7f9f9);
+  padding: 18px;
+  border-radius: 10px;
+  min-width: 180px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  color: #4b5563;
+}
+
+footer {
+  margin-top: 40px;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  background: linear-gradient(180deg, #faedcd, transparent);
+  text-align: center;
+}
+
+img {
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.18s;
+}
+
+img:hover {
+  transform: scale(1.02);
+}

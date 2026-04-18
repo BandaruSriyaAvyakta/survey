@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard - Surveillance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* small inline CSS for canvas background sizing */
+    #bgCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+    }
+    .dashboard-content { position: relative; z-index: 2; padding: 40px; }
+    footer { text-align:center; padding: 15px; color:#999; }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+
+  <nav class="navbar">
+    <a href="/">Home</a>
+    <a href="/live">Live Cam</a>
+    <a href="/upload">Upload Video</a>
+    <a href="/dashboard">Dashboard</a>
+  </nav>
+
+  <div class="dashboard-content">
+    <h2>Detection Dashboard</h2>
+    <div class="card-row">
+      <div class="card">Total Detections: <span id="totalDet">0</span></div>
+      <div class="card">Frames: <span id="framesCount">0</span></div>
+      <div class="card">Avg Confidence: <span id="avgConf">0.00</span></div>
+      <div class="card">FPS: <span id="fpsVal">0</span></div>
+    </div>
+
+    <canvas id="dashboardChart" width="800" height="200"></canvas>
+  </div>
+
+  <footer>
+    <div>Project: Intelligent Surveillance for Metro Safety — Guide: Dr. Satrughan Kumar</div>
+    <div>Team: B. Sriya Avyakta, P. Jyosnasri, Lahari Chowdary, T. Sai Vinay</div>
+    <div>Developed locally · Demo on localhost</div>
+  </footer>
+
+<script>
+  // particles-like interactive background (simple)
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let w = canvas.width = innerWidth;
+  let h = canvas.height = innerHeight;
+  const particles = [];
+  const P_COUNT = 40;
+
+  function rand(min, max){ return Math.random()*(max-min)+min; }
+  for(let i=0;i<P_COUNT;i++){
+    particles.push({ x: rand(0,w), y: rand(0,h), r: rand(1,3), vx: rand(-0.4,0.4), vy: rand(-0.4,0.4) });
+  }
+
+  let mouse = { x: w/2, y: h/2 };
+  addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    // subtle background
+    ctx.fillStyle = "rgba(8,8,10,0.6)";
+    ctx.fillRect(0,0,w,h);
+    for(const p of particles){
+      // attraction to mouse
+      const dx = mouse.x - p.x, dy = mouse.y - p.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const force = Math.min(200/dist, 0.15);
+      p.vx += dx * 0.0005 * force;
+      p.vy += dy * 0.0005 * force;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.98; p.vy *= 0.98;
+      if(p.x<0) p.x = w; if(p.x>w) p.x = 0;
+      if(p.y<0) p.y = h; if(p.y>h) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(0,188,212,0.9)";
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  addEventListener('resize', ()=>{ w = canvas.width = innerWidth; h = canvas.height = innerHeight; });
+  draw();
+
+  // Dashboard chart (dummy live-updating using /video_stats)
+  const dashCtx = document.getElementById('dashboardChart').getContext('2d');
+  const dashData = { labels: [], datasets: [{ label: 'Detections per frame', data: [], borderColor: '#00bcd4', fill:false, tension:0.2 }] };
+  const dashChart = new Chart(dashCtx, { type: 'line', data: dashData, options: { animation:{duration:300}, responsive:true }});
+
+  async function pollDashboard(){
+    try {
+      const res = await fetch('/video_stats');
+      const j = await res.json();
+      document.getElementById('totalDet').innerText = j.detections_total;
+      document.getElementById('framesCount').innerText = j.frames_processed;
+      document.getElementById('avgConf').innerText = j.avg_confidence;
+      document.getElementById('fpsVal').innerText = j.fps;
+
+      dashData.labels.push(new Date().toLocaleTimeString());
+      dashData.datasets[0].data.push(j.last_frame_detections);
+      if(dashData.labels.length > 50){
+        dashData.labels.shift(); dashData.datasets[0].data.shift();
+      }
+      dashChart.update();
+    } catch(e){
+      console.error(e);
+    } finally {
+      setTimeout(pollDashboard, 1000);
+    }
+  }
+  pollDashboard();
+</script>
+</body>
+</html>
